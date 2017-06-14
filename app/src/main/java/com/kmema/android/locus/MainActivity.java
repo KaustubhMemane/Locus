@@ -14,29 +14,43 @@ import android.widget.TextView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApi;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.vision.text.Text;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener{
 
     private final String LOG_TAG = "KaustubMemaneTestingApp";
     private TextView mtextView;
+    private TextView mTextViewLatitude;
+    private TextView mtextViewLongitude;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
+    private Location mLastLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(LocationServices.API)
+
+
+        mtextView = (TextView) findViewById(R.id.txtoutput);
+        mTextViewLatitude = (TextView) findViewById(R.id.textViewLatitude);
+        mtextViewLongitude = (TextView) findViewById(R.id.textviewLongitude);
+        buildGoogleApiClient();
+    }
+
+    private void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-
-        mtextView = (TextView) findViewById(R.id.txtoutput);
     }
 
     @Override
@@ -48,13 +62,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     protected void onStop() {
-        mGoogleApiClient.disconnect();
+        if(mGoogleApiClient.isConnected())
+        {
+            mGoogleApiClient.disconnect();
+        }
         super.onStop();
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
 
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if(mLastLocation != null)
+        {
+            mTextViewLatitude.setText(String.valueOf(mLastLocation.getLatitude()));
+            mtextViewLongitude.setText(String.valueOf(mLastLocation.getLongitude()));
+        }
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(1000);
@@ -69,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
 
     }
 
